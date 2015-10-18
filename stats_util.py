@@ -14,6 +14,12 @@ def sample_discrete(dist,size=[]):
 
 def sample_niw(mu_0,lmbda_0,kappa_0,nu_0):
     '''
+    https://en.wikipedia.org/wiki/Normal-inverse-Wishart_distribution
+    Parameters:
+    mu_0, location (vector \in R^D)
+    lmbda > 0, (real)
+    kappa_0 D x D inverse scale matrix (pos. def.)
+    nu_0 > D-1, (real)
     Returns a sample from the normal/inverse-wishart distribution, conjugate
     prior for (simultaneously) unknown mean and unknown covariance in a
     Gaussian likelihood model. Returns covariance.  '''
@@ -31,8 +37,12 @@ def sample_niw(mu_0,lmbda_0,kappa_0,nu_0):
 def sample_invwishart(lmbda,dof):
     # TODO make a version that returns the cholesky
     # TODO allow passing in chol/cholinv of matrix parameter lmbda
-    # lmbda is positive definite scale matrix of size p x p
-    # dof is the degress of freedom dof > p - 1
+    '''
+    https://en.wikipedia.org/wiki/Inverse-Wishart_distribution
+    lmbda is positive definite scale matrix of size p x p
+    dof is the degress of freedom dof > p - 1
+    example usage '''
+
     n = lmbda.shape[0]
     chol = np.linalg.cholesky(lmbda)
 
@@ -48,8 +58,8 @@ def sample_invwishart(lmbda,dof):
 def sample_wishart(sigma, dof):
     '''
     Returns a sample from the Wishart distn, conjugate prior for precision matrices.
-    sigma is a covariance matrix
-    dof is the degrees of freedom parameter
+    sigma > 0 scale matrix (p × p pos. def)
+    dof n > p − 1 degrees of freedom (real)
     '''
 
     n = sigma.shape[0]
