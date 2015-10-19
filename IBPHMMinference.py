@@ -88,9 +88,9 @@ def IBPHMMinference(data_struct,model,settings):
 		
 	total_length = 0;
 	length_ii = np.zeros([1,length(data_struct)])
-	for ii in range(0:length(data_struct)):
-	    length_ii(ii) = length(data_struct(ii).true_labels);
-	    total_length = total_length + length_ii(ii);
+	for ii,item in enumerate(data_struct.items()):
+	    length_ii[ii] = length(item['true_labels'])
+	    total_length = total_length + length_ii[ii]
 	
 	cummlength = np.cumsum(length_ii);
 	z_tot = np.zeros([1,cummlength[-1]])
