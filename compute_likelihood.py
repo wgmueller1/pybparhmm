@@ -6,8 +6,8 @@ def compute_likelihood(data_struct,theta,obsModelType,Kz_inds,Kz,Ks):
                 'Multinomial' : multinomial_like
                 }
 
-    normalizer,likelihood=  options[obsModelType]()
-    return normalizer, likelihood
+    theta,Ustats,stateCounts,data_struct,model,S =  options[obsModelType]()
+    return theta,Ustats,stateCounts,data_struct,model,S
  
 def gaussian_like():
     invSigma = theta['invSigma'];

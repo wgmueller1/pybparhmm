@@ -38,8 +38,8 @@ def backwards_message_vec(likelihood,blockEnd,pi_z,pi_s):
       # Integrate out z_t:
       bwds_msg[:,tt] = pi_z * partial_marg[:,tt+1];
       bwds_msg[:,tt] = bwds_msg[:,tt] / np.sum(bwds_msg[:,tt]);
-    end
+  
 
     # Compute marginal for first time point
     partial_marg[:,0] = block_like[:,0] * bwds_msg[:,0];
-    return [bwds_msg, partial_marg]
+    return bwds_msg, partial_marg
