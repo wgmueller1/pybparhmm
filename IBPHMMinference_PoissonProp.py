@@ -86,7 +86,7 @@ try restart:
 		    except NameError:
 		    	pass
 
-		    if !hyperparams_init_flag:
+		    if not(hyperparams_init_flag):
 		        hyperparams['alpha0'] = HMMhyperparams['a_alpha']/HMMhyperparams['b_alpha']
 		        hyperparams['kappa0'] = HMMhyperparams['a_kappa']/HMMhyperparams['b_kappa']
 		        hyperparams['sigma0'] = 1
@@ -95,14 +95,95 @@ try restart:
 		    
 		    
 		    F_init_flag = 0
-		    if exist('init_params','var')
-		        if isfield(init_params,'F')
-		            F = init_params.F;
-		            F_init_flag = 1;
-		        end
-		    end
+		    try init_params,var:
+		        if 'F' in init_params.keys(): 
+		            F = init_params['F']
+		            F_init_flag = 1
+		    except NameError:
+		    	pass    
 		    
-		    if ~F_init_flag
+		    
+		    if not(F_init_flag):
+		    	if isfield(settings,'formZInit'):
+		            for jj in range(0,length(data_struct)):
+		                F[jj,unique(data_struct[jj]['z_init'])] = 1;
+	       
+	        	else
+	            	F = np.ones([numObj,20])
+     
+        #F = sample_features_init(numObj,hyperparams.gamma0);
+        
+        #if settings['ploton']
+            #imagesc(F,'Parent',A2); title(A2,['Featuer Matrix, Iter: ' num2str(n_start)]);
+            #drawnow;
+ 
+    
+    
+    
+    # Build initial structures for parameters and sufficient statistics:
+    theta,Ustats,stateCounts,data_struct,model,S = initializeStructs(F,model,data_struct,settings);
+    
+    # Sample the transition distributions pi_z, initial distribution
+    # pi_init, emission weights pi_s, and global transition distribution beta
+    # (only if HDP-HMM) from the priors on these distributions:
+    dist_init_flag = 0
+    try init_params,var:
+        if dist_struct in init_params.keys():
+            dist_struct = init_params.dist_struct
+            dist_init_flag = 1
+    expect NameError:
+    	pass
+    
+    if not(dist_init_flag):
+        #dist_struct = sample_dist(stateCounts,hyperparams,Kstar);
+        dist_struct = sample_dist(stateCounts,hyperparams,Kstar);
+    
+    if 'formZInit' in settings.keys():
+        Ustats_temp = Ustats
+        stateSeq,INDS,stateCounts = sample_zs_init(data_struct,dist_struct,obsModelType)
+        Ustats = update_Ustats(data_struct,INDS,stateCounts,obsModelType)
+        if obsModelType=='SLDS':
+            Ustats['Ustats_r'] = Ustats_temp['Ustats_r']
+       
+        numInitThetaSamples = 1
+        print('Forming initial z using specified z_init or sampling from the prior using whatever fixed data is available')
+    else:
+        numInitThetaSamples = 1;
+   
+        
+    # Sample emission params theta_{z,s}'s initially from prior (sometimes bad
+    # choice):
+    theta_init_flag = 0; 
+    try init_params,var
+        if 'theta' in init_params.keys():
+            theta = init_params['theta']
+            theta_init_flag = 1
+    except NameError:
+    	pass    
+    
+    
+    if not(theta_init_flag):
+        #theta = sample_theta(theta,Ustats,obsModel,Kstar);
+        theta = sample_theta(theta,Ustats,obsModel,Kstar);
+        for ii in range(0,numInitThetaSamples)
+            #theta = sample_theta(theta,Ustats,obsModel,Kstar);
+            theta = sample_theta(theta,Ustats,obsModel,0)
+    
+    if 'file' in settings['saveDir'].keys():
+        os.mkdir(settings['saveDir'])
+   
+    # Save initial statistics and settings for this trial:
+    if 'filename' in settings.keys():
+        settings_filename = settings['saveDir']+'/'+settings['filename']+'_info4trial'+str(trial) #create filename for current iteration
+        init_stats_filename = settings['saveDir']+'/'+settings['filename'+'initialStats_trial'+str(trial)  #create filename for current iteration
+    else:
+        settings_filename = settings['saveDir']+'/info4trial'+str(trial)  #create filename for current iteration
+        init_stats_filename = settings['saveDir']+'/initialStats_trial'+str(trial) #create filename for current iteration
+    
+    #save(settings_filename,'data_struct','settings','model') % save current statistics
+    #save(init_stats_filename,'dist_struct','theta','hyperparams') % save current statistics
+    
+
         
 
 
