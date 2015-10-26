@@ -116,22 +116,25 @@ def initializeStructs(F,model,data_struct,settings):
                     if np.size(data_struct[ii]['blockSize'])==0:
                         data_struct[ii]['blockSize'] = np.ones([1,data_struct[ii]['obs']])
                 
-                    data_struct(ii).blockEnd = cumsum(data_struct(ii).blockSize);
-                    if isfield(data_struct(ii),'true_labels')
-                        data_struct(ii).true_labels = data_struct(ii).true_labels(find(valid));
+                    data_struct[ii]['blockEnd'] = np.cumsum(data_struct[ii]['blockSize']
+                    if 'true_labels' in data_struct[ii].keys():
+                        data_struct[ii]['true_labels'] = data_struct[ii]['true_labels'][valid.ravel().nonzero()]
 
 
-    numObj = length(data_struct);
+    numObj = len(data_struct)
 
-    stateCounts.N = zeros(Kz+1,Kz,numObj);
-    stateCounts.Ns = zeros(Kz,Ks,numObj);
+    stateCounts['N'] = np.zeros([Kz+1,Kz,numObj])
+    stateCounts['Ns'] = np.zeros([Kz,Ks,numObj])
 
-    hyperparams.gamma0 = 0;
-    hyperparams.alpha0 = 0;
-    hyperparams.kappa0 = 0;          
-    hyperparams.sigma0 = 0;
+    hyperparams['gamma0'] = 0
+    hyperparams['alpha0'] = 0
+    hyperparams['kappa0'] = 0          
+    hyperparams['sigma0'] = 0
 
-    numSaves = settings.saveEvery/settings.storeEvery;
-    S(1:numSaves) = struct('F',[],'config_log_likelihood',[],'theta',[],'dist_struct',[],'hyperparams',[],'stateSeq',[]);
+    numSaves = settings['saveEvery']/settings['storeEvery']
+    S[1:numSaves] = dict('F':[],'config_log_likelihood':[],'theta':[],'dist_struct':[],'hyperparams':[],'stateSeq':[])
 
-theta Ustats stateCounts data_struct model S
+
+
+
+return theta,Ustats,stateCounts,data_struct,model,S
