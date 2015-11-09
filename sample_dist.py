@@ -5,7 +5,7 @@ def sample_dist(stateCounts,hyperparams,Kextra):
 	Kz = Kz_prev + Kextra;
 	Ks = stateCounts['Ns'].shape[1]
 
-	% Define alpha0 and kappa0 in terms of alpha0+kappa0 and rho0:
+	# Define alpha0 and kappa0 in terms of alpha0+kappa0 and rho0:
 	alpha0 = hyperparams['alpha0']
 	kappa0 = hyperparams['kappa0']
 	sigma0 = hyperparams['sigma0']
