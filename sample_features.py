@@ -186,5 +186,75 @@ def sample_features(F_prev,gamma0,data_struct,dist_struct,theta,obsModel):
        num_prop[0] = num_prop[0] + 1
        #print('propose death')
 
+   # Grab likelihood under the previous assignment:
+   log_likelihood_ii_kk[0] = stored_log_likelihood[ii]
    
+   # Compute likelihood under the proposed change:
+   if np.sum(f_ii) == 0:
+       log_likelihood_ii_kk[1] = -np.inf
+   else:
+       pi_init = dist_struct[ii]['pi_init'][f_ii]
+       pi_init = pi_init/np.sum(pi_init)
+       pi_z = dist_struct[ii]['pi_z'][f_ii,f_ii]
+       pi_z = pi_z/matlib.repmat(np.sum(pi_z,axis=1),[1,pi_z.shape[1]])
+       pi_s = dist_struct[ii]['pi_s'][f_ii]
+       pi_s = pi_s/matlib.repmat(np.sum(pi_s,axis=1),[1,pi_s.shape[1]])
+       
+       # Pass messages forward to integrate over the mode/state sequence:
+       log_likelihood_ii = log_likelihood[f_ii,:,:]
+       log_normalizer_ii = np.max(np.max(log_likelihood_ii,axis=0),axis=1)
+       log_likelihood_ii = log_likelihood_ii - log_normalizer_ii(np.ones([np.sum(f_ii),1]),np.ones([Ks,1)],:)
+       likelihood_ii = np.exp(log_likelihood_ii)
+       log_normalizer_ii = log_normalizer_ii - (dimu/2)*log(2*pi);\
+       
+       fwd_msg,neglog_c = forward_message_vec(likelihood_ii,log_normalizer_ii,data_struct[ii]['blockEnd'],pi_z,pi_s,pi_init)
+       
+       if np.isnan(np.sum(neglog_c)):
+           log_likelihood_ii_kk[1] = -np.inf
+       else:
+           log_likelihood_ii_kk[1] = np.sum(neglog_c) #observation_likelihood(F(ii,:),data_struct(ii),obsModelType,dist_struct(ii),theta);
+      
+   
+   # Compute accept-reject ratio:
+   log_rho_star = (log_likelihood_ii_kk[1] - log_likelihood_ii_kk[0])\
+       + (log(poisspdf(num_new_unique_features,gamma0/numObj)) - log(poisspdf(num_unique_features,gamma0/numObj)))\
+       + (log_prob_reverse_proposal - log_prob_proposal);\
+   rho = exp(log_rho_star);\
+   
+   # Sample new feature value:
+   if np.isnan(rho):
+       raise Exception('NaN rho')
+   else:
+       
+       if rho>1:
+           F[ii,:] = f_ii
+           ind = 1
+       else:
+           ind = (random.random()>(1-rho))
+           F[ii,:] = (1-ind)*F[ii,:] + (ind-0)*f_ii
+     
+     
+       prop_ind = (transition_case == 1)+1
+       num_accept[prop_ind] = num_accept[prop_ind] + ind
+   
+   #display(num2str((ind-0)*['accept proposal'] + (1-ind)*['reject proposal']))
+   #
+   #    if (ind==1) && (transition_case>1)
+   #        removed_features(unique_feature_inds(death_ind)) = 1;
+   #    end
+   
+#    if log_likelihood_ii_kk(ind+1)<stored_log_likelihood(ii)
+#        display('accepted lower likelihood move')
+#    else
+#        display('moved to higher likelihood')
+#    end
+   
+   stored_log_likelihood[ii] = log_likelihood_ii_kk[ind+1]
+   
+   config_log_likelihood = config_log_likelihood + stored_log_likelihood[ii]
+   
+   featureCounts = np.sum(F,axis=0)
+   F,dist_struct,theta = reallocate_states(F,dist_struct,theta,priorType);
+   return F,dist_struct,theta,config_log_likelihood,num_accept,num_prop 
+
 	    
