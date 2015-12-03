@@ -61,7 +61,7 @@ def sample_features_PoissonProp(F_prev,gamma0,data_struct,dist_struct,theta,obsM
 	        
  	# For each of the currently instantiated features (this vector will	
     # change after sampling each object ii):
-    for kk in feature_inds[featureCounts>0]:
+  for kk in feature_inds[featureCounts>0]:
         
         # Store previous feature value:
         Fik_prev = F[ii,kk]
@@ -133,24 +133,24 @@ def sample_features_PoissonProp(F_prev,gamma0,data_struct,dist_struct,theta,obsM
             unique_features_ii[kk] = 1
         
     #deal with unique features
-    unique_feature_inds = feature_inds[unique_features_ii]
+  unique_feature_inds = feature_inds[unique_features_ii]
     
     # Sample from Poisson proposal;
-    num_new_unique_features = poissrnd(gamma0/numObj)
+  num_new_unique_features = poissrnd(gamma0/numObj)
     
-    num_prop[num_new_unique_features+1] = num_prop[num_new_unique_features+1]+1
+  num_prop[num_new_unique_features+1] = num_prop[num_new_unique_features+1]+1
     
-    f_ii = F[ii,:]
-    f_ii[unique_feature_inds] = 0
-    f_ii[Kz_prev+1:Kz_prev+num_new_unique_features] = 1
+  f_ii = F[ii,:]
+  f_ii[unique_feature_inds] = 0
+  f_ii[Kz_prev+1:Kz_prev+num_new_unique_features] = 1
    
     #Grab likelihood under the previous assignment:
-    log_likelihood_ii_kk(1) = stored_log_likelihood(ii);
+  log_likelihood_ii_kk(1) = stored_log_likelihood(ii);
    
    # Compute likelihood under the proposed change:
-   if np.sum(f_ii) == 0:
+  if np.sum(f_ii) == 0:
        log_likelihood_ii_kk(2) = -np.inf
-   else:
+  else:
        
        if Kz_prev+num_new_unique_features>Kz_max:
            
@@ -184,5 +184,75 @@ def sample_features_PoissonProp(F_prev,gamma0,data_struct,dist_struct,theta,obsM
            log_likelihood = compute_likelihood_unnorm(data_struct[ii],theta,obsModelType,range(0,Kz_max),Kz_max,Ks)
            
            print('adding more parameters')
+
+  pi_init = dist_struct[ii]['pi_init'][f_ii]
+  pi_init = pi_init./sum(pi_init);
+  pi_z = dist_struct(ii).pi_z(f_ii,f_ii);
+  pi_z = pi_z./repmat(sum(pi_z,2),[1,size(pi_z,2)]);
+  pi_s = dist_struct(ii).pi_s(f_ii);
+  pi_s = pi_s./repmat(sum(pi_s,2),[1,size(pi_s,2)]);
+       
+       # Pass messages forward to integrate over the mode/state sequence:
+       log_likelihood_ii = log_likelihood(f_ii,:,:);
+       log_normalizer_ii = max(max(log_likelihood_ii,[],1),[],2);
+       log_likelihood_ii = log_likelihood_ii - log_normalizer_ii(ones(sum(f_ii),1),ones(Ks,1),:);
+       likelihood_ii = exp(log_likelihood_ii);
+       log_normalizer_ii = log_normalizer_ii - (dimu/2)*log(2*pi);
+       
+       [fwd_msg neglog_c] = forward_message_vec(likelihood_ii,log_normalizer_ii,data_struct(ii).blockEnd,pi_z,pi_s,pi_init);
+       
+       if isnan(sum(neglog_c))
+           log_likelihood_ii_kk(2) = -inf;
+       else
+           log_likelihood_ii_kk(2) = sum(neglog_c); %observation_likelihood(F(ii,:),data_struct(ii),obsModelType,dist_struct(ii),theta);
+       end
+   end
+   
+   # Compute accept-reject ratio:
+   log_rho_star = (log_likelihood_ii_kk[1] - log_likelihood_ii_kk[0]
+   rho = np.exp(log_rho_star)
+   
+   # Sample new feature value:
+   # doublecheck
+   if np.isnan(rho):
+       raise ValueError('NaN rho')
+   else:
+       if rho>1:
+           F[ii,:] = f_ii
+           ind = 0
+       else:
+           ind = (random.random()>(1-rho)
+           F[ii,:] = (1-ind)*F[ii,:] + (ind-0)*f_ii
+       
+       
+       num_accept[num_new_unique_features] = num_accept[num_new_unique_features]+ind
+       
+
+   
+   #display(num2str((ind-0)*['accept proposal'] + (1-ind)*['reject proposal']))
+   #
+   #    if (ind==1) && (transition_case>1)
+   #        removed_features(unique_feature_inds(death_ind)) = 1;
+   #    end
+   
+#    if log_likelihood_ii_kk(ind+1)<stored_log_likelihood(ii)
+#        display('accepted lower likelihood move')
+#    else
+#        display('moved to higher likelihood')
+#    end
+   
+   stored_log_likelihood[ii] = log_likelihood_ii_kk[ind+1]
+   
+   config_log_likelihood = config_log_likelihood + stored_log_likelihood[ii]
+   
+   featureCounts = np.sum(F,axis=0)
+   
+   used_features = np.where(featureCounts>0)
+   Kz_prev = used_features[-1]
+   
+
+   F,dist_struct,theta = reallocate_states(F,dist_struct,theta,priorType)
+   return F,display,theta
+    
 
 
