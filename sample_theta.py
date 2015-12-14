@@ -211,20 +211,12 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
     elif priorType=='IW-N':
 
         invSigma = theta['invSigma']
-        A = theta['A']
         mu = theta['mu']
         
-        store_XX = Ustats['XX']
-        store_YX = Ustats['YX']
+
         store_YY = Ustats['YY']
         store_sumY = Ustats['sumY']
-        store_sumX = Ustats['sumX']
-        
-        # If MNIW-N, K and M are as in MNIW. If IW-N, K=1 and M=0.
-        K = prior_params['K']
-        M = prior_params['M']
-        MK = prior_params['M']*prior_params['K']
-        MKM = MK*prior_params['M'].T
+    
         
         if 'numIter' not in prior_params.keys():
             prior_params['numIter'] = 50
@@ -245,14 +237,10 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
                     for n in range(0,numIter):
                         
                         ## Given X, Y get sufficient statistics
-                        Sxx       = store_XX[:,:,kz,ks] + K
-                        Syx       = store_YX[:,:,kz,ks] + MK - mu[:,kz,ks]*store_sumX[:,kz,ks].T
-                        Syy       = store_YY[:,:,kz,ks] + MKM\
+                        Syy       = store_YY[:,:,kz,ks] + \
                             - mu[:,kz,ks]*store_sumY[:,kz,ks].T - store_sumY[:,kz,ks]*mu[:,kz,ks].T +\
                              store_card[kz,ks]*mu[:,kz,ks]*mu[:,kz,ks].T
-                        SyxSxxInv = Syx/Sxx
-                        Sygx      = Syy - SyxSxxInv*Syx.T
-                        Sygx = (Sygx + Sygx.T)/2
+                        Sygx = (Syy + Syy.T)/2
                         
                         # Sample Sigma given s.stats
                         sqrtSigma,sqrtinvSigma = randiwishart(Sygx + nu_delta,nu+store_card[kz,ks])
