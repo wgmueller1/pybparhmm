@@ -252,27 +252,109 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
                         
                         # Sample mu given A and Sigma
                         Sigma_n = np.linalg.inv(Lambda0 + store_card[kz,ks]*invSigma[:,:,kz,ks])
-                        mu_n = Sigma_n*(theta0 + invSigma[:,:,kz,ks]*(store_sumY[:,kz,ks]-A[:,:,kz,ks]*store_sumX[:,kz,ks]))
+                        mu_n = Sigma_n*(theta0 + invSigma[:,:,kz,ks]*store_sumY[:,kz,ks]))
                         
                         mu[:,kz,ks] = mu_n + np.linalg.cholesky(Sigma_n).T*np.random.standard_normal((dimu,1))
                         
                 else:
-                    Sxx = K
-                    SyxSxxInv = M
-                    Sygx = 0
+    
                     
                     sqrtSigma,sqrtinvSigma = randiwishart(nu_delta,nu)
                     invSigma[:,:,kz,ks] = sqrtinvSigma.T*sqrtinvSigma
                     
-                    cholinvK = np.cholesky(np.linalg.inv(K))
-                    A[:,:,kz,ks] = sampleFromMatrixNormal(M,sqrtSigma,cholinvK)
-                    
+
                     mu[:,kz,ks] = mu0 + cholSigma0.T*np.random.standard_normal(dimu,1)
         
         theta['invSigma'] = invSigma
         theta['A'] = A
         theta['mu'] =  mu
 
+    elif priorType=='IW-N-tiedwithin':
+        invSigma = theta['invSigma']
+        mu = theta['mu']
+        
+
+        store_YY = Ustats['YY']
+        store_sumY = Ustats['sumY']
+    
+        
+        if 'numIter' not in prior_params.keys():
+            prior_params['numIter'] = 50
+        
+        numIter = prior_params['numIter']
+        
+        mu0 = prior_params['mu0']
+        cholSigma0 = prior_params['cholSigma0']
+        Lambda0 = np.linalg.inv(prior_params['cholSigma0'].T*prior_params['cholSigma0'])
+        theta0 = Lambda0*prior_params['mu0']
+
+        dimu=nu_delta.shape[0]
+        for kz in range(0,numIter):
+            store_invSigma = invSigma[:,:,kz,1]
+            for n in range(0,numIter):
+
+                for ks in range(0,Ks):
+                    if store_card(kz,ks)>0:
+                        Sigma_n = np.linalg.inv(Lambda0 + store_card[kz,ks]*store_invSigma)
+                        mu_n = Sigma_n*(theta0 + store_invSigma*store_sumY[:,kz,ks])
+                        mu[:,kz,ks] = mu_n + np.linalg.cholesky(Sigma_n).T*np.random.standard_normal((dimu,1))
+                    else:
+                        mu[:,kz,ks] = mu0 + cholSimga0.T*np.random.standard_normal((dimu,1))
+
+                #Given Y get sufficient statistics
+                store_card_kz = store_card(kz,:);
+                #need to double check squeeze function
+                squeeze_mu_kz = squeeze(mu[:,kz,:])
+                muY = squeeze_mu_kz*squeeze(store_sumY[:,kz,:].T)
+                muN = (np.matlib.repmat(store_card_kz,(dimu,1))*squeeze_mu_kz)*squeeze_mu_kz.T
+                Syy = np.sum(store_YY[:,:,kz,:],axis=3) - muY - muY.T+muN
+                Syy = (Syy+Syy.T)/2
+
+                # Sample Sigma given s.stats
+                sqrtSigma,sqrtinvSigma = randiwishart(Syy+nu_delta,nu+np.sum(store_card_kz))
+                store_invSigma = sqrtSigma.T*sqrtSigma
+        invSigma[:,:,kz,0:Ks]=np.matlib.repmat(store_invSigma,np.array([1,1,1,Ks]))
+
+    theta['invSigma'] = invSigma
+    theta['mu'] = mu
+
+elif priorType in ['N-IW-N','Afixed-IW-N','ARD']:
+
+    invSigma = theta['invSigma']
+    A = theta['A']
+    mu = theta['mu']
+
+    store_XX = Ustats['XX']
+    store_YX = Ustats['YX']
+    store_YY = Ustats['YY']
+    store_sumY = Ustats['sumY']
+    store_sumX = Ustats['sumX']
+
+    if 'numIter' not in prio_params.keys():
+        prior_params['numIter']=50
+
+    numIter = prior_params['numIter']
+
+    if 'zeroMean' in prior_params.keys():
+        mu0 = prior_params['mu0']
+        cholSigma0 = prior_params['cholSigma0']
+        Lambda0 = np.linalg.inv(prior_params['cholSigma0'].T*prior_params['cholSigma0'])
+        theta0 = Lambda0*prior_params['mu0']
+
+    r = A.shape[1]/A.shape[0]
+
+    if priorType=='N-IW-N':
+        M = prior_params['M']
+        Lambda0_A = prior_params['Lambda0_A']
+        theta0_A = Lambda0_A*M[:]
+        dim_vecA = M.size
+
+        XinvSigmaX = np.zeros((dim_vecA,dim_vecA))
+        XinvSigmay = np.zeros((dim_vecA,1))
+
+    elif priorType=='ARD':
+        
+        
 
 
 
