@@ -353,8 +353,31 @@ elif priorType in ['N-IW-N','Afixed-IW-N','ARD']:
         XinvSigmay = np.zeros((dim_vecA,1))
 
     elif priorType=='ARD':
+        M=np.zeros(A[:,:,1,1].shape)
+        theta0_A = np.zeros((A.size,1))
+        dim_vecA = M.size
+
+        a_ARD = prior_params['a_ARD']
+        b_ARD = prior_params['b_ARD']
+
+        if r==1:
+            numHypers = M.shape[0]
+        else:
+            numHypers =r
+
+        ARDhypers = np.ones((numHypers,Kz,Ks))
+        posInds = np.where(store_card>0)
+        if x.size>0:
+            ARDhypers[:,0:mu.shape[1]]=theta['ARDhypers']
+
+    dim = nu_delta.shape[0]
+    for n in range(0,numIter):
+        for kz in range(0,Kz):
+            for ks in range(0,Ks):
+                
+      
         
-        
+    elif priorType==
 
 
 
