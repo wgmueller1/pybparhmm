@@ -374,7 +374,62 @@ elif priorType in ['N-IW-N','Afixed-IW-N','ARD']:
     for n in range(0,numIter):
         for kz in range(0,Kz):
             for ks in range(0,Ks):
-                
+                if store_card[kz,ks]>0:
+                    #Sample Sigma given A, mu, and s.stats
+                    S= store_YY[:,:,kz,ks] + A[:,:,kz,ks]*store_XX[:,:,kz,ks]*A[:,:,kz,ks].T\
+                    -A[:,:,kz,ks]*store_YX[:,:,kz,ks].T - store_YX[:,:,kz,ks]*A[:,:,kz,ks].T\
+                    -mu[:,kz,ks]*(store_sumY[:,kz,ks]-A[:,:,kz,ks]*store_sumX[:,kz,ks]).T-\
+                    (store_sumY[:,kz,ks]-A[:,:,kz,ks]*store_sumX[:,kz,ks])*mu[:,kz,ks].T\
+                    +store_card[kz,ks]*mu[:,kz,ks]*mu[:,kz,ks].T
+                    S=0.5*(S+S.T)
+
+                    sqrtSigma,sqrtinvSigma=randiwishart(S+nu_delta,nu+store_card[kz,ks])
+                    invSigma[:,:,kz,ks] = sqrtinvSigma.T*sqrtinvSigma
+
+                    if prior_params=='zeroMean':
+                        mu[:,kz,ks]=np.zeros((dimu,1))
+                    else:
+                        #Sample mu given A, Sigma, and s.stats
+                        Sigma_n = np.inv(Lambda0 + store_card(kz,ks)*invSigma[:,:,:kz,ks])
+                        mu_n = Sigma_n *(theta0 + invSigma[:,:,kz,ks]*(store_sumY[:,kz,ks]-A[:,:,kz,ks]*store_sumX[:,kz,ks]))
+                        mu[:,kz,ks] = mu_n +np.cholesky(Sigma_n).T*randn(dimu,1)
+
+                    if prior_params=='N-IW-N':
+                        XinvSigmaX=XinvSigmaX+np.kron(store_XX[:,:,kz,ks],invSigma[:,:,kz,ks])
+                        temp = invSigma[:,:,kz,ks]*(store_YX[:,:,kz,ks]-mu[:,kz,ks]*store_sumX[:,kz,ks].T)
+                        XinvSigmay = XinvSigmay + temp[:] #since A is shared, grow for all data, not just kz,ks
+                    elif priorType=='ARD': 
+                        XinvSigmaX = np.kron(store_XX[:,:,kz,ks],invSigma[:,:,kz,ks])
+                        XinvSigmay = invSigma[:,:,kz,ks]*(store_YX[:,:,kz,ks]-mu[:,kz,ks]*store_sumX[:,kz,ks].T)
+                        XinvSigmay = XinvSigmay[:]
+                        ARDhypers_kzks = ARDhypers[:,kz,ks]
+                        if r == 1:
+                            numObsPerHyper = numRow
+                        else:
+                            numObsPerHyper = numRow*(numCol/r)
+                            
+                        ARDhypers_kzks = ARDhypers_kzks[:,np.ones([1,numObsPerHyper])].T
+                        ARDhypers_kzks = ARDhypers_kzks[:]
+                        Lambda0_A = np.diag(ARDhypers_kzks)
+                            
+                        Sigma_A = np.linalgo.inv(Lambda0_A + XinvSigmaX)
+                        mu_A = Sigma_A*(theta0_A + XinvSigmay)
+                        vecA = mu_A + np.linalg.cholesky(Sigma_A).T*randn(dim_vecA,1)
+                        #A(:,:,kz,ks) = reshape(vecA,size(M))
+                           
+                        #AA = sum(A(:,:,kz,ks).*A(:,:,kz,ks),1);
+                        #if r>1:
+                        #    AA = reshape(AA,[numCol/r r]);
+                        #    AA = sum(AA,1);
+                          
+                        aa = np.zeros([1,numHypers])
+                        for ii in range(0,numHypers):
+                            aa(ii) = randgamma(a_ARD + numObsPerHyper/2);
+                            #aa(ii) = randgamma(a_ARD + numRow/2);
+                            
+                        ARDhypers[:,kz,ks] =  aa / (b_ARD + AA/2);
+                      
+                        
       
         
     elif priorType==
