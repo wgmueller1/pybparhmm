@@ -394,7 +394,7 @@ elif priorType in ['N-IW-N','Afixed-IW-N','ARD']:
                         mu_n = Sigma_n *(theta0 + invSigma[:,:,kz,ks]*(store_sumY[:,kz,ks]-A[:,:,kz,ks]*store_sumX[:,kz,ks]))
                         mu[:,kz,ks] = mu_n +np.cholesky(Sigma_n).T*randn(dimu,1)
 
-                    if prior_params=='N-IW-N':
+                    if priorType='N-IW-N':
                         XinvSigmaX=XinvSigmaX+np.kron(store_XX[:,:,kz,ks],invSigma[:,:,kz,ks])
                         temp = invSigma[:,:,kz,ks]*(store_YX[:,:,kz,ks]-mu[:,kz,ks]*store_sumX[:,kz,ks].T)
                         XinvSigmay = XinvSigmay + temp[:] #since A is shared, grow for all data, not just kz,ks
@@ -432,7 +432,37 @@ elif priorType in ['N-IW-N','Afixed-IW-N','ARD']:
                         
       
         
-    elif priorType==
+    elif priorType=='IW':
+
+        invSigma = theta['invSigma']
+        
+        store_YY = Ustats['YY']
+        store_sumY = Ustats['sumY']
+        
+        dimu = np.shape(nu_delta)[0]
+        
+        for kz in range(0,Kz):
+            for ks in range(0,Ks):
+                
+                if store_card[kz,ks]>0:  #**
+                    
+                    # Given X, Y get sufficient statistics
+                    Syy  = store_YY[:,:,kz,ks]
+                    Sygx = (Syy + Syy.T)/2
+                    
+                    # Sample Sigma given s.stats
+                    sqrtSigma,sqrtinvSigma = randiwishart(Sygx + nu_delta,nu+store_card[kz,ks])
+                    invSigma(:,:,kz,ks) = sqrtinvSigma.T*sqrtinvSigma
+                    
+                else:
+                    sqrtSigma,sqrtinvSigma = randiwishart(nu_delta,nu);
+                    invSigma[:,:,kz,ks] = sqrtinvSigma.T*sqrtinvSigma;
+ 
+        theta['invSigma'] = invSigma
+        
+    return theta
+
+
 
 
 
