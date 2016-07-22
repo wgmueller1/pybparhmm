@@ -70,114 +70,106 @@ def sampleZfromPrior(data_struct,dist_struct,N,Ns):
     totSeq = np.zeros((Kz,Ks))
     indSeq = np.zeros((T,Kz,Ks))
 
-    # for t=1:T
-    #     % Sample z(t):
-    #     if (t == 1)
-    #         Pz = pi_init';
-    #         obsInd = [1:blockEnd(1)];
-    #     else
-    #         Pz = pi_z(z(t-1),:)';
-    #         obsInd = [blockEnd(t-1)+1:blockEnd(t)];
-    #     end
-    #     Pz   = cumsum(Pz);
-    #     z(t) = 1 + sum(Pz(end)*rand(1) > Pz);
+    for t in range(0,T):
+        # Sample z(t):
+        if (t == 1):
+            Pz = pi_init.T
+            obsInd = [0:blockEnd[0]
+        else:
+            Pz = pi_z[z[t-1],:].T
+            obsInd = [blockEnd[t-1]+1:blockEnd[t]
         
-    #     % Add state to counts matrix:
-    #     if (t > 1)
-    #         N(z(t-1),z(t)) = N(z(t-1),z(t)) + 1;
-    #     else
-    #         N(Kz+1,z(t)) = N(Kz+1,z(t)) + 1;  % Store initial point in "root" restaurant Kz+1
-    #     end
+        Pz   = np.cumsum(Pz)
+        z[t] = 1 + np.sum(Pz[-1]*np.ranodom.rand(1) > Pz)
         
-    #     % Sample s(t,1)...s(t,Nt) and store sufficient stats:
-    #     for k=1:blockSize(t)
-    #         % Sample s(t,k):
-    #         if Ks > 1
-    #             Ps = pi_s(z(t),:);
-    #             Ps = cumsum(Ps);
-    #             s(obsInd(k)) = 1 + sum(Ps(end)*rand(1) > Ps);
-    #         else
-    #             s(obsInd(k)) = 1;
-    #         end
+        # Add state to counts matrix:
+        if (t > 1):
+            N[z[t-1],z[t]] = N[z[t-1],z[t]] + 1
+        else:
+            N[Kz+1,z[t]] = N[Kz+1,z[t]] + 1  # Store initial point in "root" restaurant Kz+1
+        
+        
+        # Sample s(t,1)...s(t,Nt) and store sufficient stats:
+        for k in range(0,blockSize[t])
+            # Sample s(t,k):
+            if Ks > 1:
+                Ps = pi_s[z[t],:]]
+                Ps = np.cumsum(Ps)
+                s[obsInd[k]] = 1 + np.sum(Ps[-1]*np.random.rand(1) > Ps)
+            else:
+                s[obsInd[k]] = 1
             
-    #         % Add s(t,k) to count matrix and observation statistics:
-    #         Ns(z(t),s(obsInd(k))) = Ns(z(t),s(obsInd(k))) + 1;
-    #         totSeq(z(t),s(obsInd(k))) = totSeq(z(t),s(obsInd(k))) + 1;
-    #         indSeq(totSeq(z(t),s(obsInd(k))),z(t),s(obsInd(k))) = obsInd(k);
-    #     end
-    # end
+            # Add s(t,k) to count matrix and observation statistics:
+            Ns[z[t],s[obsInd[k]]] = Ns[z[t],s[obsInd[k]]] + 1
+            totSeq[z[t],s[obsInd[k]]] = totSeq[z[t],s[obsInd[k]]] + 1
+            indSeq[totSeq[z[t],s[obsInd[k]]],z[t],s[obsInd[k]]] = obsInd[k]
 
-    # return (z,s,totSeq,indSeq,N,Ns)  
+    return (z,s,totSeq,indSeq,N,Ns)  
 
 
-    # function [z s totSeq indSeq N Ns] = setZtoFixedSeq(data_struct,dist_struct,N,Ns,z_fixed,sampleS)
+def setZtoFixedSeq(data_struct,dist_struct,N,Ns,z_fixed,sampleS):
         
-    #     % Define parameters:
-    #     pi_z = dist_struct.pi_z;
-    #     pi_s = dist_struct.pi_s;
-    #     pi_init = dist_struct.pi_init;
+        # Define parameters:
+        pi_z = dist_struct['pi_z']
+        pi_s = dist_struct['pi_s']
+        pi_init = dist_struct['pi_init']
         
-    #     Kz = size(pi_z,2);
-    #     Ks = size(pi_s,2);
+        Kz = np.shape(pi_z)[1]
+        Ks = np.shape(pi_s)[1]
         
-    #     T = length(data_struct.blockSize);
-    #     blockSize = data_struct.blockSize;
-    #     blockEnd = data_struct.blockEnd;
+        T = len(data_struct['blockSize'])
+        blockSize = data_struct['blockSize']
+        blockEnd = data_struct['blockEnd']
         
-    #     totSeq = zeros(Kz,Ks);
-    #     indSeq = zeros(T,Kz,Ks);
+        totSeq = np.zeros((Kz,Ks))
+        indSeq = np.zeros((T,Kz,Ks))
         
-    #     % Initialize state and sub-state sequences:
-    #     z = z_fixed;
-    #     if sampleS
-    #         for t=1:T
-    #             % Sample z(t):
-    #             if (t == 1)
-    #                 obsInd = [1:blockEnd(1)];
-    #             else
-    #                 obsInd = [blockEnd(t-1)+1:blockEnd(t)];
-    #             end
+        # Initialize state and sub-state sequences:
+        z = z_fixed
+        if sampleS:
+            for t in range(0,T):
+                # Sample z(t):
+                if (t == 1):
+                    obsInd = range(0,blockEnd[0])
+                else:
+                    obsInd = range(blockEnd[t-1]+1,blockEnd[t])
                 
-    #             % Sample s(t,1)...s(t,Nt) and store sufficient stats:
-    #             for k=1:blockSize(t)
-    #                 % Sample s(t,k):
-    #                 if Ks > 1
-    #                     Ps = pi_s(z(t),:);
-    #                     Ps = cumsum(Ps);
-    #                     s(obsInd(k)) = 1 + sum(Ps(end)*rand(1) > Ps);
-    #                 else
-    #                     s(obsInd(k)) = 1;
-    #                 end
-    #             end
-    #         end
-    #     else
-    #         s = ones(1,sum(blockSize));
-    #     end
-        
-        
-    #     for t=1:T
-    #         % Sample z(t):
-    #         if (t == 1)
-    #             obsInd = [1:blockEnd(1)];
-    #         else
-    #             obsInd = [blockEnd(t-1)+1:blockEnd(t)];
-    #         end
-            
-    #         % Add state to counts matrix:
-    #         if (t > 1)
-    #             N(z(t-1),z(t)) = N(z(t-1),z(t)) + 1;
-    #         else
-    #             N(Kz+1,z(t)) = N(Kz+1,z(t)) + 1;  % Store initial point in "root" restaurant Kz+1
-    #         end
-            
-    #         % Sample s(t,1)...s(t,Nt) and store sufficient stats:
-    #         for k=1:blockSize(t)
                 
-    #             % Add s(t,k) to count matrix and observation statistics:
-    #             Ns(z(t),s(obsInd(k))) = Ns(z(t),s(obsInd(k))) + 1;
-    #             totSeq(z(t),s(obsInd(k))) = totSeq(z(t),s(obsInd(k))) + 1;
-    #             indSeq(totSeq(z(t),s(obsInd(k))),z(t),s(obsInd(k))) = obsInd(k);
-    #         end
-    #     end
+                # Sample s(t,1)...s(t,Nt) and store sufficient stats:
+                for k in range(0,blockSize[t]):
+                    # Sample s(t,k):
+                    if Ks > 1:
+                        Ps = pi_s[z[t],:]
+                        Ps = np.cumsum(Ps);
+                        s[obsInd[k]] = 1 + np.sum(Ps[-1]*np.random.rand(1) > Ps)
+                    else:
+                        s[obsInd[k]] = 1
+        else:
+            s = np.ones((1,np.sum(blockSize)))
         
-    #     
+        
+        
+        for t in range(0,T):
+            # Sample z(t):
+            if (t == 1)
+                obsInd = range(0,blockEnd[0])
+            else
+                obsInd = range(blockEnd[t-1]+1:blockEnd[t])
+            
+            # Add state to counts matrix:
+            if (t > 1):
+                N[z[t-1],z[t]] = N[z[t-1],z[t]] + 1
+            else:
+                N[Kz+1,z[t]] = N[Kz+1,z[t]] + 1  # Store initial point in "root" restaurant Kz+1
+            
+            
+            # Sample s(t,1)...s(t,Nt) and store sufficient stats:
+            for k in range(0,blockSize[t]):
+                
+                # Add s(t,k) to count matrix and observation statistics:
+                Ns[z[t],s[obsInd[k]]] = Ns[z[t],s[obsInd[k]]] + 1
+                totSeq[z[t],s[obsInd[k]]] = totSeq[z[t],s[obsInd[k]]] + 1
+                indSeq[totSeq[z[t],s[obsInd[k]]],z[t],s[obsInd[k]]] = obsInd[k]
+        
+        
+        return (z,s,totSeq,indSeq,N,Ns)  
