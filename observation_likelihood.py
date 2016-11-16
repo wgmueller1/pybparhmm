@@ -15,7 +15,7 @@ def observation_likelihood(F,data_struct,obsModelType,dist_struct,theta):
 	pi_z,pi_init,pi_s = transformDistStruct(dist_struct,Kz_inds)
 
 	# Pass messages forward to integrate over the mode/state sequence:
-	[fwd_msg neglog_c] = forward_message_vec(likelihood_Kz_inds,log_normalizer,blockEnd,pi_z,pi_s,pi_init)
+	fwd_msg,neglog_c = forward_message_vec(likelihood_Kz_inds,log_normalizer,blockEnd,pi_z,pi_s,pi_init)
 
 	total_log_likelihood = np.sum(neglog_c)
 	return total_log_likelihood,neglog_c

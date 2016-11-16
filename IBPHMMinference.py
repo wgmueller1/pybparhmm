@@ -1,3 +1,5 @@
+import numpy as np
+
 def IBPHMMinference(data_struct,model,settings):
 	'''
 	Inputs:
@@ -11,7 +13,7 @@ def IBPHMMinference(data_struct,model,settings):
 	in a dict of the form S['store_count'].field['time_series']['subfield']'''
 
 	trial = settings['trial']
-	if 'saveMin' !in settings.keys():
+	if 'saveMin' not in settings.keys():
 	    settings['saveMin'] = 1
 
 	Niter = settings['Niter']
@@ -96,7 +98,7 @@ def IBPHMMinference(data_struct,model,settings):
 	z_tot = np.zeros([1,cummlength[-1]])
 	true_labels_tot = np.zeros([1,cummlength[-1]])
 	true_labels_tot[0:length_ii[0]] = data_struct[data_struct.keys()[0]]['true_labels']
-	for ii in range(1,len(data_struct))
+	for ii in range(1,len(data_struct)):
 	    true_labels_tot[cummlength(ii-1)+1:cummlength(ii)] = data_struct[ii]['true_labels']
 	
 
@@ -105,68 +107,68 @@ def IBPHMMinference(data_struct,model,settings):
 ##Run Sampler 
 
 
-num_accept = np.zeros([Niter,2])
-num_prop = np.zeros([Niter,2])
+	num_accept = np.zeros([Niter,2])
+	num_prop = np.zeros([Niter,2])
 
-for n in range(1,Niter):
-    
-    F,dist_struct,theta,config_log_likelihood,num_accept[n,:],num_prop[n,:] = sample_features(F,hyperparams.gamma0,data_struct,dist_struct,theta,obsModel)
-    
-    # Sample z and s sequences given data, transition distributions,
-    # HMM-state-specific mixture weights, and emission parameters:
-    # Block sample z_{1:T}|y_{1:T}
-    stateSeq,INDS,stateCounts = sample_zs(data_struct,dist_struct,F,theta,obsModelType)
-    # Create sufficient statistics:
-    Ustats = update_Ustats(data_struct,INDS,stateCounts,obsModelType)
- 
-    # Sample the transition distributions pi_z and initial distribution
-    # pi_init:
-    dist_struct = sample_dist(stateCounts,hyperparams,numObj)
-    
-    # Sample theta_{z,s}'s conditioned on z and s sequences and data suff.
-    # stats. Ustats:
-    theta = sample_theta(theta,Ustats,obsModel,numObj)
-    
-    # Resample IBP hyperparameter:
-    hyperparams = sample_IBPparam(F,hyperparams,HMMhyperparams)
-    
-    # Resample Dirichlet concentration parameters: 
-    hyperparams = sample_distparams(F,dist_struct,hyperparams,HMMhyperparams,50);
-    
-    # Build and save stats structure:
-    #S = store_stats(S,n,settings,F,config_log_likelihood,stateSeq,dist_struct,theta,hyperparams);
-    
-    # Plot stats:
-    if 'true_labels' in data_struct.keys() & settings['ploton']:
-                
-        if remainder(n,settings['plotEvery'])==0:
-                        
-            F_used = np.zeros([F.shape])
-            Nsets = len(data_struct)
-            sub_x = math.floor(sqrt(Nsets))
-            sub_y = math.ceil(Nsets/sub_x)
-            
-            z_tot[0:length_ii[0]] = stateSeq[0]['z']            
-            for ii in range(1,Nsets):
-                z_tot[cummlength[ii-1]+1:cummlength[ii]] = stateSeq[ii]['z'];
-           
-            
-            relabeled_z,Hamm,assignment,relabeled_true_labels = mapSequence2Truth(true_labels_tot,z_tot)
-            
-            F_used[0,unique(stateSeq[0]['z'])] = 1
-            #A1 = subplot(sub_x,sub_y,1,'Parent',H1);
-            #imagesc([relabeled_z(1:cummlength(1)); relabeled_true_labels(1:cummlength(1))],'Parent',A1,[1 max(union(relabeled_z,relabeled_true_labels))]); title(A1,['Iter: ' num2str(n)]);
-            for ii in range(1,Nsets):
-                F_used[ii,unique(stateSeq[ii]['z'])] = 1
-                #A1 = subplot(sub_x,sub_y,ii,'Parent',H1);
-                #imagesc([relabeled_z(cummlength(ii-1)+1:cummlength(ii)); relabeled_true_labels(cummlength(ii-1)+1:cummlength(ii))],'Parent',A1,[1 max(union(relabeled_z,relabeled_true_labels))]); title(A1,['Iter: ' num2str(n)]); 
-           
-           # drawnow;
-            
-            #imagesc(F+F_used,'Parent',A2); title(A2,['Featuer Matrix, Iter: ' num2str(n)]);
-            #drawnow;
-            
-            #if isfield(settings,'plotpause') && settings.plotpause
-            #    if isnan(settings.plotpause), waitforbuttonpress; else pause(settings.plotpause); end
+	for n in range(1,Niter):
+	    
+	    F,dist_struct,theta,config_log_likelihood,num_accept[n,:],num_prop[n,:] = sample_features(F,hyperparams.gamma0,data_struct,dist_struct,theta,obsModel)
+	    
+	    # Sample z and s sequences given data, transition distributions,
+	    # HMM-state-specific mixture weights, and emission parameters:
+	    # Block sample z_{1:T}|y_{1:T}
+	    stateSeq,INDS,stateCounts = sample_zs(data_struct,dist_struct,F,theta,obsModelType)
+	    # Create sufficient statistics:
+	    Ustats = update_Ustats(data_struct,INDS,stateCounts,obsModelType)
+	 
+	    # Sample the transition distributions pi_z and initial distribution
+	    # pi_init:
+	    dist_struct = sample_dist(stateCounts,hyperparams,numObj)
+	    
+	    # Sample theta_{z,s}'s conditioned on z and s sequences and data suff.
+	    # stats. Ustats:
+	    theta = sample_theta(theta,Ustats,obsModel,numObj)
+	    
+	    # Resample IBP hyperparameter:
+	    hyperparams = sample_IBPparam(F,hyperparams,HMMhyperparams)
+	    
+	    # Resample Dirichlet concentration parameters: 
+	    hyperparams = sample_distparams(F,dist_struct,hyperparams,HMMhyperparams,50);
+	    
+	    # Build and save stats structure:
+	    #S = store_stats(S,n,settings,F,config_log_likelihood,stateSeq,dist_struct,theta,hyperparams);
+	    
+	    # Plot stats:
+	    if 'true_labels' in data_struct.keys() & settings['ploton']:
+	                
+	        if remainder(n,settings['plotEvery'])==0:
+	                        
+	            F_used = np.zeros([F.shape])
+	            Nsets = len(data_struct)
+	            sub_x = math.floor(sqrt(Nsets))
+	            sub_y = math.ceil(Nsets/sub_x)
+	            
+	            z_tot[0:length_ii[0]] = stateSeq[0]['z']            
+	            for ii in range(1,Nsets):
+	                z_tot[cummlength[ii-1]+1:cummlength[ii]] = stateSeq[ii]['z'];
+	           
+	            
+	            relabeled_z,Hamm,assignment,relabeled_true_labels = mapSequence2Truth(true_labels_tot,z_tot)
+	            
+	            F_used[0,unique(stateSeq[0]['z'])] = 1
+	            #A1 = subplot(sub_x,sub_y,1,'Parent',H1);
+	            #imagesc([relabeled_z(1:cummlength(1)); relabeled_true_labels(1:cummlength(1))],'Parent',A1,[1 max(union(relabeled_z,relabeled_true_labels))]); title(A1,['Iter: ' num2str(n)]);
+	            for ii in range(1,Nsets):
+	                F_used[ii,unique(stateSeq[ii]['z'])] = 1
+	                #A1 = subplot(sub_x,sub_y,ii,'Parent',H1);
+	                #imagesc([relabeled_z(cummlength(ii-1)+1:cummlength(ii)); relabeled_true_labels(cummlength(ii-1)+1:cummlength(ii))],'Parent',A1,[1 max(union(relabeled_z,relabeled_true_labels))]); title(A1,['Iter: ' num2str(n)]); 
+	           
+	           # drawnow;
+	            
+	            #imagesc(F+F_used,'Parent',A2); title(A2,['Featuer Matrix, Iter: ' num2str(n)]);
+	            #drawnow;
+	            
+	            #if isfield(settings,'plotpause') && settings.plotpause
+	            #    if isnan(settings.plotpause), waitforbuttonpress; else pause(settings.plotpause); end
 
 

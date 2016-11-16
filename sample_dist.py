@@ -13,7 +13,7 @@ def sample_dist(stateCounts,hyperparams,Kextra):
 	N = stateCounts['N']  # N(i,j) = # z_t = i to z_{t+1}=j transitions. N(Kz+1,i) = 1 for i=z_1.
 	Ns = stateCounts['Ns']  # Ns(i,j) = # s_t = j given z_t=i
 
-	dist_struct[0:numObj] = dict('pi_z':np.zeros([Kz,Kz]),'pi_init':np.zeros([1,Kz]),'pi_s':np.zeros([Kz,Ks]))
+	dist_struct[0:numObj] = {'pi_z':np.zeros([Kz,Kz]),'pi_init':np.zeros([1,Kz]),'pi_s':np.zeros([Kz,Ks])}
 
 	beta_vec = np.ones([1,Kz])
 
@@ -44,12 +44,12 @@ def sample_dist(stateCounts,hyperparams,Kextra):
 	        # Sample \pi_j's given sampled \beta_vec and counts N, where
 	        # DP(\alpha+\kappa,(\alpha\beta+\kappa\delta(j))/(\alpha+\kappa)) is
 	        # Dirichlet distributed over the finite partition defined by beta_vec:
-	        pi_z[j,:] = randdirichlet_unnorm([alpha0*beta_vec + kappa_vec + Ntemp(j,:)].T).T
+	        pi_z[j,:] = randdirichlet_unnorm([alpha0*beta_vec + kappa_vec + Ntemp[j,:]].T).T
 	        # Sample HMM-state-specific mixture weights \psi_j's with truncation
 	        # level Ks given sampled s stats Ns:
-	        pi_s[j,:] = randdirichlet([Nstemp(j,:) + sigma_vec].T).T
+	        pi_s[j,:] = randdirichlet([Nstemp[j,:] + sigma_vec].T).T
 
-	    pi_init = randdirichlet_unnorm([alpha0*beta_vec + Ntemp(Kz+1,:)].T).T
+	    pi_init = randdirichlet_unnorm([alpha0*beta_vec + Ntemp[Kz+1,:]].T).T
 	    
 	    if 'Nr' in stateCounts.keys():
 	        Nr = stateCounts['Nr'][ii,:]  # Nr(i) = # r_t = i
@@ -61,5 +61,4 @@ def sample_dist(stateCounts,hyperparams,Kextra):
 	    dist_struct[ii]['pi_z'] = pi_z
 	    dist_struct[ii]['pi_init'] = pi_init
 	    dist_struct[ii]['pi_s'] = pi_s
-    
-    return dist_struct
+	    return dist_struct

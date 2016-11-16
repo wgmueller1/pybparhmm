@@ -20,24 +20,23 @@ def initializeStructs(F,model,data_struct,settings):
 
             theta = {'invSigma':np.zeros([dimu,dimu,Kz,Ks]),'mu':np.zeros([dimu,Kz,Ks])}  
             Ustats = {'card':np.zeros([Kz,Ks]),'YY':np.zeros([dimu,dimu,Kz,Ks]),'sumY':np.zeros([dimu,Kz,Ks])}
-            
-     elif model['obsModel']['type']=='Multinomial':
+    elif model['obsModel']['type']=='Multinomial':
 
-            for ii range(0,length(data_struct)):
-                if data_struct[ii]['obs'].shape[0]>1
+            for ii in range(0,length(data_struct)):
+                if data_struct[ii]['obs'].shape[0]>1:
                     raise ValueError('not multinomial obs')
                 if np.size(data_struct[ii]['blockSize'])==0:
-                    data_struct[ii]['blockSize'] = np.ones([1,data_struct[ii]['obs'][1])])
-                data_struct[ii]['blockEnd'] = np.cumsum(data_struct[ii]['blockSize']
+                    data_struct[ii]['blockSize'] = np.ones([1,data_struct[ii]['obs'][1]])
+                data_struct[ii]['blockEnd'] = np.cumsum(data_struct[ii]['blockSize'])
+
+            data_struct[0]['numVocab'] = len(prior_params['alpha'])
             
-            data_struct[0]['numVocab'] = len(prior_params['alpha']
-            
-            theta = {'p':np.zeros([Kz,Ks,data_struct[0]['numVocab'])}
+            theta = {'p':np.zeros([Kz,Ks,data_struct[0]['numVocab']])}
             Ustats = {'card':np.zeros([data_struct[0]['numVocab'],Kz,Ks])}
 
-     elif model['obsModel']['type']=='AR' or model['obsModel']['type']=='SLDS':
+    elif model['obsModel']['type']=='AR' or model['obsModel']['type']=='SLDS':
 
-            if settings['Ks']!=1
+            if settings['Ks']!=1:
                 raise ValueError('Switching linear dynamical models only defined for Gaussian process noise, not MoG')
             
                 if model['obsModel']['priorType']=='MNIW':
@@ -68,11 +67,11 @@ def initializeStructs(F,model,data_struct,settings):
                     
                     theta = {'invSigma':np.zeros([dimu,dimu,Kz,Ks]),'A':np.kron(np.ones([1,1,Kz,Ks]),prior_params['A']),'mu':np.zeros([dimu,Kz,Ks])}
                     
-                else
+                else:
                     raise ValueError('no known prior type')
             
             
-            Ustats = struct('card',zeros(Kz,Ks),'XX',zeros(dimX,dimX,Kz,Ks),'YX',zeros(dimu,dimX,Kz,Ks),'YY',zeros(dimu,dimu,Kz,Ks),'sumY',zeros(dimu,Kz,Ks),'sumX',zeros(dimX,Kz,Ks));
+            Ustats = {'card':np.zeros((Kz,Ks)),'XX':np.zeros((dimX,dimX,Kz,Ks)),'YX':np.zeros((dimu,dimX,Kz,Ks)),'YY':np.zeros((dimu,dimu,Kz,Ks)),'sumY':np.zeros((dimu,Kz,Ks)),'sumX':np.zeros((dimX,Kz,Ks))}
             
             if model['obsModel']['type']=='SLDS':
                 
@@ -83,20 +82,16 @@ def initializeStructs(F,model,data_struct,settings):
                     model['HMMmodel']['params']['a_eta'] = 1
                     model['HMMmodel']['params']['b_eta'] = 1
                     print('Using single Gaussian measurement noise model')
-                else
+                else:
                     Kr = settings['Kr']
                     print('Using mixture of Gaussian measurement noise model')
-                
-                
-                dimy = prior_params['C'].shape[0]
-                
-                    
-                if model['obsModel']['y_priorType']=='IW':
-                        theta['theta_r'] = {'invSigma',np.zeros([dimy,dimy,Kr])}
 
+                dimy = prior_params['C'].shape[0]
+                if model['obsModel']['y_priorType']=='IW':
+                    theta['theta_r'] = {'invSigma':np.zeros([dimy,dimy,Kr])}
                 elif model['obsModel']['y_priorType']=='NIW' or model['obsModel']['y_priorType']=='IW-N':
-                        theta['theta_r'] = {'invSigma',np.zeros([dimy,dimy,Kr]),'mu':np.zeros([dimy,Kr])}
-                else
+                    theta['theta_r'] = {'invSigma':np.zeros([dimy,dimy,Kr]),'mu':np.zeros([dimy,Kr])}
+                else:
                     raise ValueError('no known prior type for measurement noise')
                 
                 
@@ -106,7 +101,7 @@ def initializeStructs(F,model,data_struct,settings):
                             
         
             
-            for ii in range(0,len(data_struct))
+            for ii in range(0,len(data_struct)):
                 if 'X' not in data_struct[ii].keys() or np.size(data_struct[ii]['X'])==0:
                     
                     X,valid = makeDesignMatrix(data_struct[ii]['obs'],model['obsModel']['r'])
@@ -116,7 +111,7 @@ def initializeStructs(F,model,data_struct,settings):
                     if np.size(data_struct[ii]['blockSize'])==0:
                         data_struct[ii]['blockSize'] = np.ones([1,data_struct[ii]['obs']])
                 
-                    data_struct[ii]['blockEnd'] = np.cumsum(data_struct[ii]['blockSize']
+                    data_struct[ii]['blockEnd'] = np.cumsum(data_struct[ii]['blockSize'])
                     if 'true_labels' in data_struct[ii].keys():
                         data_struct[ii]['true_labels'] = data_struct[ii]['true_labels'][valid.ravel().nonzero()]
 
@@ -132,9 +127,5 @@ def initializeStructs(F,model,data_struct,settings):
     hyperparams['sigma0'] = 0
 
     numSaves = settings['saveEvery']/settings['storeEvery']
-    S[1:numSaves] = dict('F':[],'config_log_likelihood':[],'theta':[],'dist_struct':[],'hyperparams':[],'stateSeq':[])
-
-
-
-
-return theta,Ustats,stateCounts,data_struct,model,S
+    S[1:numSaves] = {'F':[],'config_log_likelihood':[],'theta':[],'dist_struct':[],'hyperparams':[],'stateSeq':[]}
+    return theta,Ustats,stateCounts,data_struct,model,S
