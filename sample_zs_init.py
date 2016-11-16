@@ -2,43 +2,43 @@ import numpy as np
 
 def sample_zs_init(data_struct,dist_struct,obsModelType):
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# Define and initialize parameters %
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # Define and initialize parameters %
+    #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Kz = np.shape(dist_struct[1]['pi_z'][1]
-Ks = np.shape(dist_struct[1]['pi_s'][1]
+    Kz = np.shape(dist_struct[1]['pi_z'][1])
+    Ks = np.shape(dist_struct[1]['pi_s'][1])
 
-# Preallocate INDS
-for ii in range(0,len(data_struct)):
-  T = len(data_struct[ii]['blockSize']
-  INDS[ii][obsIndzs[0:Kz,0:Ks] = dict('inds',np.sparse(1,T),'tot',0)
-
-
-
-for ii in range(0,len(data_struct)):
-    
-    N_init = np.zeros((Kz+1,Kz))
-    Ns_init = np.zeros((Kz,Ks))
-    
-    if 'z_init' in data_struct[ii].keys():
-        z_init_ii = data_struct[ii]['z_init']
-    else:
-        z_init_ii = data_struct[ii]['true_labels']
-
-    
-    stateSeq(ii).z,stateSeq(ii).s,totSeq,indSeq,N(:,:,ii),Ns(:,:,ii) = setZtoFixedSeq(data_struct[ii],dist_struct[ii],N_init,Ns_init,z_init_ii,0)
-    
-    for jj in range(0,Kz):
-        for kk in range(0,Ks):
-            INDS[ii][obsIndzs[jj,kk]]['tot']  = totSeq[jj,kk]
-            INDS[ii][obsIndzs[jj,kk]['inds'] = scipy.sparse(indSeq[:,jj,kk].T)
+    # Preallocate INDS
+    for ii in range(0,len(data_struct)):
+      T = len(data_struct[ii]['blockSize'])
+      INDS[ii][obsIndzs[0:Kz,0:Ks]] = {'inds':np.sparse(1,T),'tot':0}
 
 
-stateCounts['N'] = N
-stateCounts['Ns'] = Ns
 
-return (stateSeq,INDS,stateCounts)
+    for ii in range(0,len(data_struct)):
+        
+        N_init = np.zeros((Kz+1,Kz))
+        Ns_init = np.zeros((Kz,Ks))
+        
+        if 'z_init' in data_struct[ii].keys():
+            z_init_ii = data_struct[ii]['z_init']
+        else:
+            z_init_ii = data_struct[ii]['true_labels']
+
+        
+        stateSeq[ii]['z'],stateSeq[ii]['s'],totSeq,indSeq,N[:,:,ii],Ns[:,:,ii] = setZtoFixedSeq(data_struct[ii],dist_struct[ii],N_init,Ns_init,z_init_ii,0)
+        
+        for jj in range(0,Kz):
+            for kk in range(0,Ks):
+                INDS[ii][obsIndzs[jj,kk]]['tot']  = totSeq[jj,kk]
+                INDS[ii][obsIndzs[jj,kk]]['inds'] = scipy.sparse(indSeq[:,jj,kk].T)
+
+
+    stateCounts['N'] = N
+    stateCounts['Ns'] = Ns
+
+    return (stateSeq,INDS,stateCounts)
 
 
 def sampleZfromPrior(data_struct,dist_struct,N,Ns):
@@ -74,10 +74,10 @@ def sampleZfromPrior(data_struct,dist_struct,N,Ns):
         # Sample z(t):
         if (t == 1):
             Pz = pi_init.T
-            obsInd = [0:blockEnd[0]
+            obsInd = range(0,blockEnd[0])
         else:
             Pz = pi_z[z[t-1],:].T
-            obsInd = [blockEnd[t-1]+1:blockEnd[t]
+            obsInd = range(blockEnd[t-1]+1,blockEnd[t])
         
         Pz   = np.cumsum(Pz)
         z[t] = 1 + np.sum(Pz[-1]*np.ranodom.rand(1) > Pz)
@@ -90,10 +90,10 @@ def sampleZfromPrior(data_struct,dist_struct,N,Ns):
         
         
         # Sample s(t,1)...s(t,Nt) and store sufficient stats:
-        for k in range(0,blockSize[t])
+        for k in range(0,blockSize[t]):
             # Sample s(t,k):
             if Ks > 1:
-                Ps = pi_s[z[t],:]]
+                Ps = pi_s[z[t],:]
                 Ps = np.cumsum(Ps)
                 s[obsInd[k]] = 1 + np.sum(Ps[-1]*np.random.rand(1) > Ps)
             else:
@@ -151,10 +151,10 @@ def setZtoFixedSeq(data_struct,dist_struct,N,Ns,z_fixed,sampleS):
         
         for t in range(0,T):
             # Sample z(t):
-            if (t == 1)
+            if (t == 1):
                 obsInd = range(0,blockEnd[0])
-            else
-                obsInd = range(blockEnd[t-1]+1:blockEnd[t])
+            else:
+                obsInd = range(blockEnd[t-1]+1,blockEnd[t])
             
             # Add state to counts matrix:
             if (t > 1):

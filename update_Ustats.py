@@ -5,8 +5,6 @@ def update_Ustats(data_struct,INDS,stateCounts,obsModelType):
     Kz = np.shape(Ns)[0]
     Ks = np.shape(Ns)[1]
 
-    switch obsModelType
-
     if obsModelType=='Gaussian':
             
             dimu = np.shape(data_struct[0]['obs'])[0]
@@ -21,10 +19,10 @@ def update_Ustats(data_struct,INDS,stateCounts,obsModelType):
 
                 u = data_struct[ii]['obs']
                 
-                for kz in unique_z
+                for kz in unique_z:
                     unique_s_for_z = np.nonzero(Ns[kz,:,ii])
-                    for ks in unique_s_for_z
-                        obsInd = INDS[ii].obsIndzs[kz,ks]['inds'][0:INDS[ii][obsIndzs[kz,ks]['tot']]
+                    for ks in unique_s_for_z:
+                        obsInd = INDS[ii]['obsIndzs'][kz,ks]['inds'][0:INDS[ii]][obsIndzs[kz,ks]['tot']]
                         store_YY[:,:,kz,ks] = store_YY[:,:,kz,ks] + u[:,obsInd]*u[:,obsInd].T
                         store_sumY[:,kz,ks] = store_sumY[:,kz,ks] + np.sum(u[:,obsInd],axis=1)
                 store_card = store_card + Ns[:,:,ii]            
@@ -32,11 +30,10 @@ def update_Ustats(data_struct,INDS,stateCounts,obsModelType):
             Ustats.card = store_card
             Ustats.YY = store_YY
             Ustats.sumY = store_sumY
-        
-     elif obsModelType in ['AR','SLDS']:
+    elif obsModelType in ['AR','SLDS']:
 
-            dimu = np.shape(data_struct[1]['obs'][0]
-            dimX = np.shape(data_struct[1]['X'][0]
+            dimu = np.shape(data_struct[1]['obs'][0])
+            dimX = np.shape(data_struct[1]['X'][0])
 
             store_XX = np.zeros((dimX,dimX,Kz,Ks))
             store_YX = np.zeros((dimu,dimX,Kz,Ks))
@@ -53,9 +50,9 @@ def update_Ustats(data_struct,INDS,stateCounts,obsModelType):
                 X = data_struct[ii]['X']
 
                 for kz in unique_z:
-                    unique_s_for_z = np.nonzero[Ns[kz,:,ii]
+                    unique_s_for_z = np.nonzero(Ns[kz,:,ii])
                     for ks in unique_s_for_z:
-                        obsInd = INDS[ii][obsIndzs[kz,ks]['inds'][0:INDS[ii]['obsIndzs'][kz,ks]['tot']]
+                        obsInd = INDS[ii][obsIndzs[kz,ks]['inds'][0:INDS[ii]]['obsIndzs'][kz,ks]['tot']]
                         store_XX[:,:,kz,ks] = store_XX[:,:,kz,ks] + X[:,obsInd]*X[:,obsInd].T
                         store_YX[:,:,kz,ks] = store_YX[:,:,kz,ks] + u[:,obsInd]*X[:,obsInd].T
                         store_YY[:,:,kz,ks] = store_YY[:,:,kz,ks] + u[:,obsInd]*u[:,obsInd].T
@@ -102,7 +99,7 @@ def update_Ustats(data_struct,INDS,stateCounts,obsModelType):
                 Ustats.Ustats_r['card'] = store_card
 
             
-        elif obsModelType=='Multinomial':
+    elif obsModelType=='Multinomial':
 
             numVocab = data_struct[0]['numVocab']
             
@@ -116,8 +113,8 @@ def update_Ustats(data_struct,INDS,stateCounts,obsModelType):
                 for kz in unique_z:
                     unique_s_for_z = np.nonzero(Ns[kz,:,ii])
                     for ks in unique_s_for_z:
-                        obsInd = INDS[ii]['obsIndzs'][kz,ks]['inds'][0:INDS[ii]['obsIndzs'][kz,ks]['tot']]
-                        store_counts[:,kz,ks] = store_counts[:,kz,ks] + np.histogram(u['obsInd'],[0:numVocab]).T
+                        obsInd = INDS[ii]['obsIndzs'][kz,ks]['inds'][0:INDS[ii]]['obsIndzs'][kz,ks]['tot']
+                        store_counts[:,kz,ks] = store_counts[:,kz,ks] + np.histogram(u['obsInd'],range(0,numVocab)).T
          
             
             Ustats.card = store_counts

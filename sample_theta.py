@@ -1,33 +1,32 @@
 def sample_theta(theta,Ustats,obsModel,Kextra):
+    prior_params = obsModel['params']
+    if obsModel['type']=='Multinomial':
+            
+        p = theta['p']
+        store_counts = Ustats['card']
+        alpha_vec = prior_params['alpha']
+            
+        Kz,Ks = store_counts.shape
+            
+        for kz in range(0,Kz):
+            for ks in range(0,Ks):
+                #doublecheck
+                p[kz,ks,:] = randdirichlet([alpha_vec.T+store_counts[:,kz,ks]]).T
 
-prior_params = obsModel'params']
-if obsModel['type']=='Multinomial':
-        
-    p = theta['p']
-    store_counts = Ustats['card']
-    alpha_vec = prior_params['alpha']
-        
-    Kz,Ks = store_counts.shape
-        
-    for kz in range(0,Kz):
-        for ks in range(0,Ks):
-            #doublecheck
-            p[kz,ks,:] = randdirichlet([alpha_vec.T+store_counts[:,kz,ks]]).T
-
-        
-    theta['p'] = p
-        
- elif obsModel['type'] in ['Gaussian','AR','SLDS']:
-        
-        theta = sample_theta_submodule(theta,Ustats,obsModel['priorType'],prior_params,Kextra)
-        
-        if obsModel['type']=='SLDS':
-            y_prior_params = obsModel['y_params']
-            #doublecheck
-            theta['theta_r'] = sample_theta_submodule(theta['theta_r'],Ustats['Ustats_r'],\
-                obsModel['y_priorType'],y_prior_params,[])
-        
-return theta
+            
+        theta['p'] = p
+            
+    elif obsModel['type'] in ['Gaussian','AR','SLDS']:
+            
+            theta = sample_theta_submodule(theta,Ustats,obsModel['priorType'],prior_params,Kextra)
+            
+            if obsModel['type']=='SLDS':
+                y_prior_params = obsModel['y_params']
+                #doublecheck
+                theta['theta_r'] = sample_theta_submodule(theta['theta_r'],Ustats['Ustats_r'],\
+                    obsModel['y_priorType'],y_prior_params,[])
+            
+    return theta
 
 
 def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
@@ -39,7 +38,7 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
     if store_card.shape[0]==1:
         store_card = store_card.T
     #double check this is hstack or vstack
-    store_card = [store_card; np.zeros([Kextra,store_card.shape[1]])]
+    store_card = np.vstack((store_card,np.zeros([Kextra,store_card.shape[1]])))
     Kz,Ks = store_card.shape
 
     if priorType=='MNIW':
@@ -88,7 +87,7 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
         theta['invSigma'] = invSigma
         theta['A'] =  A
 
-   elif priorType=='NIW':
+    elif priorType=='NIW':
         
         invSigma = theta['invSigma']
         mu = theta['mu']
@@ -179,7 +178,7 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
                             
                             # Sample Sigma given s.stats
                             sqrtSigma,sqrtinvSigma = randiwishart(Sygx + nu_delta,nu+store_card[kz,ks])
-                            invSigma(:,:,kz,ks) = sqrtinvSigma.T*sqrtinvSigma
+                            invSigma[:,:,kz,ks] = sqrtinvSigma.T*sqrtinvSigma
                             
                             # Sample A given Sigma and s.stats
                             cholinvSxx = np.linalg.chol(np.linalg.inverse(Sxx))
@@ -187,7 +186,7 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
                             
                             # Sample mu given A and Sigma
                             Sigma_n = inv(Lambda0 + store_card(kz,ks)*invSigma[:,:,kz,ks])
-                            mu_n = Sigma_n*(theta0 + invSigma(:,:,kz,ks)*(store_sumY[:,kz,ks]-A[:,:,kz,ks]\
+                            mu_n = Sigma_n*(theta0 + invSigma[:,:,kz,ks]*(store_sumY[:,kz,ks]-A[:,:,kz,ks]\
                                 *store_sumX[:,kz,ks]))
                             #doublecheck
                             mu[:,kz,ks] = mu_n + np.linalg.cholesky(Sigma_n).T*np.random.standard_normal(dimu,1)
@@ -252,7 +251,7 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
                         
                         # Sample mu given A and Sigma
                         Sigma_n = np.linalg.inv(Lambda0 + store_card[kz,ks]*invSigma[:,:,kz,ks])
-                        mu_n = Sigma_n*(theta0 + invSigma[:,:,kz,ks]*store_sumY[:,kz,ks]))
+                        mu_n = Sigma_n*(theta0 + invSigma[:,:,kz,ks]*store_sumY[:,kz,ks])
                         
                         mu[:,kz,ks] = mu_n + np.linalg.cholesky(Sigma_n).T*np.random.standard_normal((dimu,1))
                         
@@ -302,7 +301,7 @@ def sample_theta_submodule(theta,Ustats,priorType,prior_params,Kextra):
                         mu[:,kz,ks] = mu0 + cholSimga0.T*np.random.standard_normal((dimu,1))
 
                 #Given Y get sufficient statistics
-                store_card_kz = store_card(kz,:);
+                store_card_kz = store_card[kz,:]
                 #need to double check squeeze function
                 squeeze_mu_kz = squeeze(mu[:,kz,:])
                 muY = squeeze_mu_kz*squeeze(store_sumY[:,kz,:].T)
