@@ -6,9 +6,7 @@ def forward_message_vec(likelihood,loglike_normalizer,blockEnd,pi_z,pi_s,pi_init
 
 	fwd_msg  = np.ones([Kz,T])
 	neglog_c = np.zeros([1,T])
-    
-    marg_like = np.sum(likelihood*pi_s[:,:,np.ones([1,1,blockEnd[-1]])],axis=1)/
-    .reshape(likelihood.shape[0],likelihood.shape[2])
+	marg_like = np.sum(likelihood*pi_s[:,:,np.ones([1,1,blockEnd[-1]])],axis=1).reshape(likelihood.shape[0],likelihood.shape[2])
 	
 	# If necessary, combine likelihoods within blocks, avoiding underflow
 	if T < blockEnd(end):
@@ -17,9 +15,9 @@ def forward_message_vec(likelihood,loglike_normalizer,blockEnd,pi_z,pi_s,pi_init
 	  block_like = np.zeros([Kz,T]);
 	  block_like[:,1] = np.sum(marg_like[:,1:blockEnd[0]],axis=1)
 	  # Initialize normalization constant to be that due to the likelihood:
-	  neglog_c[0] = np.sum(loglike_normalizer[1:blockEnd[0])
+	  neglog_c[0] = np.sum(loglike_normalizer[1:blockEnd[0]])
 	  for tt in range(1,T):
-	    block_like[:,tt] = np.sum(marg_like[:,blockEnd[tt-1]+1:blockEnd[tt]),axis=1)
+	    block_like[:,tt] = np.sum(marg_like[:,blockEnd[tt-1]+1:blockEnd[tt]],axis=1)
 	    neglog_c[tt] = np.sum(loglike_normalizer[blockEnd[tt-1]+1:blockEnd[tt]])
 	 
 

@@ -23,14 +23,13 @@ nu_delta = (nu-d-1)*meanSigma
 numObj = 5 # number of time series
 numStates = 9  # number of behaviors
 for k in range(0,numStates):
-    Sigma{k} = iwishrnd(nu_delta,nu);   # sample a covariance matrix
+    Sigma[k] = iwishrnd(nu_delta,nu);   # sample a covariance matrix
     
-    if r==1 # if autoregressive order is 1, use some predefined dynamic matrices that cover the range of stable dynamics
-        A{k}     = (-1 +0.2*k)*eye(d)
-    else
-        A{k} = sampleFromMatrixNormal(M,Sigma{k},K)  # otherwise, sample a random set of lag matrices (each behavior might not be very distinguishable!)
-    end
-end
+    if r==1: # if autoregressive order is 1, use some predefined dynamic matrices that cover the range of stable dynamics
+        A[k] = (-1 +0.2*k)*eye(d)
+    else:
+        A[k] = sampleFromMatrixNormal(M,Sigma[k],K)  # otherwise, sample a random set of lag matrices (each behavior might not be very distinguishable!)
+
 
 # Define feature matrix by sampling from truncated IBP:
 F = sample_truncated_features_init(numObj,numStates,10);
@@ -42,7 +41,7 @@ for ii in range(0,numStates):
     pi_z(ii,ii) = p_self
 
 pi_init = np.ones((1,numStates))
-pi_init = pi_init./np.sum(pi_init)
+pi_init = pi_init/np.sum(pi_init)
 pi_s = np.ones((numStates,1))
 dist_struct_tmp['pi_z'] = pi_z
 dist_struct_tmp['pi_init'] = pi_init
@@ -60,7 +59,7 @@ for nn in range(0,numObj):
     P = np.cumsum(pi_init_nn)
     labels_temp = 1+np.sum(P[-1]*np.random.rand(1) > P)
     labels[0] = Kz_inds[labels_temp]
-    tmp = mvnrnd(np.zeros((d,1)).T,Sigma{labels(1)},r).T
+    tmp = mvnrnd(np.zeros((d,1)).T,Sigma[labels[1],r].T)
     x0 = tmp[:]
     x = x0
     
@@ -68,17 +67,16 @@ for nn in range(0,numObj):
         if k>1:
             P = np.cumsum(pi_z_nn[labels[k-1],:])
             labels[k] = 1+np.sum(P[-1]*np.random.rand(1) > P)
-        Y(:,k) = A{labels(k)}*x + np.random.multivariate_normal(zeros(d,1).T,Sigma{labels(k)},1).T
-        X(:,k) = x;
-        x = [Y(:,k);x(1:(end-d),:)];
-    end
+        Y[:,k] = A[labels(k)]*x + np.random.multivariate_normal(np.zeros((d,1)).T,Sigma[labels(k),1].T)
+        X[:,k] = x;
+        x = [[Y[:,k],x[1:-1-d]],:]
     
 
     
     data_struct[nn]['obs'] = Y
     data_struct[nn]['true_labels'] = labels
     
-end
+
 
 
 #clear model settings

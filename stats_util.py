@@ -57,10 +57,7 @@ def sample_invwishart(lmbda,dof):
 
 def sample_wishart(sigma, dof):
     '''
-    Returns a sample from the Wishart distn, conjugate prior for precision matrices.
-    sigma > 0 scale matrix (p × p pos. def)
-    dof n > p − 1 degrees of freedom (real)
-    '''
+    Returns a sample from the Wishart distn, conjugate prior for precision matrices.'''
 
     n = sigma.shape[0]
     chol = np.linalg.cholesky(sigma)

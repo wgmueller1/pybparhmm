@@ -9,7 +9,7 @@ def backwards_message_vec(likelihood,blockEnd,pi_z,pi_s):
     bwds_msg = np.ones(Kz,T)
     partial_marg = np.zeros(Kz,T)
     #Compute marginalized likelihoods for all times, integrating s_t
-    if Kz==1 and Ks=1:
+    if Kz==1 and Ks==1:
         marg_like =  likelihood.reshape()
     else:
         marg_like =  np.sum(likelihood * pi_s[:,:,np.ones(1,1,blockEnd[end])],axis=1).reshape()
@@ -20,7 +20,7 @@ def backwards_message_vec(likelihood,blockEnd,pi_z,pi_s):
         block_like = np.zeros(Kz,T);
         block_like[:,0] = np.sum(marg_like[:,0:blockEnd[0]],axis=1)
 
-        for tt in range(1:T+1):
+        for tt in range(1,T+1):
             block_like[:,tt] = np.sum(marg_like[:,blockEnd[tt-1]+1:blockEnd[tt-1]],axis=1)
 
 
@@ -31,7 +31,7 @@ def backwards_message_vec(likelihood,blockEnd,pi_z,pi_s):
 
 
     # Compute messages backwards in time
-    for tt in range(T-1:-1:0):
+    for tt in range(T-1,0,-1):
       # Multiply likelihood by incoming message:
       partial_marg[:,tt] = block_like[:,tt]*bwds_msg[:,tt];
       
